@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>InternSafe: Fake Offer Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0A0B1E;--fg:#F4F1EA;--mut:#9a9cc0;--card:#14163a;--ind:#5B45E4;--lime:#C6FF3D;--red:#FF3B5C;--amb:#FFB020;--paper:#F4F1EA;--ink:#14163a;--line:#2a2d63;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#EEEBFA;--fg:#14163a;--mut:#555887;--card:#fff;--line:#d3cff0}}
+:root[data-theme="light"]{--bg:#EEEBFA;--fg:#14163a;--mut:#555887;--card:#fff;--line:#d3cff0}
+:root[data-theme="dark"]{--bg:#0A0B1E;--fg:#F4F1EA;--mut:#9a9cc0;--card:#14163a;--line:#2a2d63}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:hidden;min-height:100vh;
+background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px;background-attachment:fixed}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(600px 400px at 15% 10%,#5B45E455,transparent),radial-gradient(500px 400px at 90% 60%,#C6FF3D22,transparent);animation:blob 14s ease-in-out infinite alternate;z-index:-1}
+@keyframes blob{to{transform:translate(40px,30px) scale(1.15)}}
+h1,h2,h3,.sg{font-family:'Space Grotesk',sans-serif;line-height:1.05;margin:0}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;color:var(--lime);text-transform:uppercase}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 4vw;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font:700 22px 'Space Grotesk';color:var(--fg);text-decoration:none;margin-right:auto}.brand b{color:var(--lime)}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav a{color:var(--mut);text-decoration:none;padding:7px 12px;border-radius:99px;font-weight:600;font-size:14px;transition:.25s}
+nav a.on{background:var(--ind);color:#fff}nav a:hover{color:var(--fg)}nav a.on:hover{color:#fff}
+button{font:inherit;cursor:pointer}
+.btn{background:linear-gradient(135deg,var(--ind),#8a6bff);color:#fff;border:0;padding:13px 24px;border-radius:12px;font-weight:700;text-decoration:none;display:inline-block;box-shadow:0 6px 24px #5B45E466;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-3px);box-shadow:0 12px 30px #5B45E499}.btn.g{background:transparent;border:1px solid var(--line);color:var(--fg);box-shadow:none}
+.ic{background:none;border:1px solid var(--line);color:var(--fg);border-radius:99px;width:36px;height:36px}
+main{padding:0 4vw 60px;max-width:1150px;margin:auto}.page[hidden]{display:none}
+.page{animation:pg .5s ease both}@keyframes pg{from{opacity:0;transform:translateY(14px)}}
+.hero{position:relative;display:grid;grid-template-columns:1.3fr .9fr;gap:30px;align-items:center;padding:50px 0 30px}
+@media(max-width:820px){.hero{grid-template-columns:1fr}}
+h1{font-size:clamp(46px,9vw,104px);font-weight:700;margin:12px 0 18px;letter-spacing:-.035em}
+h1 span{display:inline-block;opacity:0;transform:translateY(30px) rotate(3deg);animation:w .7s cubic-bezier(.2,.9,.3,1.2) forwards}
+@keyframes w{to{opacity:1;transform:none}}
+.shim{background:linear-gradient(90deg,#8a6bff,var(--lime),#8a6bff);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:w .7s forwards,sh 3s linear infinite!important}
+@keyframes sh{to{background-position:-200% 0}}
+.sub{color:var(--mut);max-width:520px;font-size:18px}
+.stage{position:relative;min-height:430px}
+.letter{position:absolute;left:4%;top:30px;width:80%;background:var(--paper);color:var(--ink);padding:22px;border-radius:6px;transform:rotate(-4deg);box-shadow:0 20px 50px #0008;font-size:14px;animation:fl 6s ease-in-out infinite}
+@keyframes fl{50%{transform:rotate(-2deg) translateY(-10px)}}
+.letter .sg{font-size:17px;margin-bottom:8px}.letter p{margin:6px 0}
+mark{background:none;color:inherit;background-image:linear-gradient(var(--red),var(--red));background-repeat:no-repeat;background-position:0 100%;background-size:0 3px;animation:ul .8s forwards}
+mark:nth-of-type(1){animation-delay:1.4s}mark:nth-of-type(2){animation-delay:2.2s}mark:nth-of-type(3){animation-delay:3s}
+@keyframes ul{to{background-size:100% 3px}}
+.stamp{position:absolute;right:-6px;bottom:-24px;border:4px solid var(--red);color:var(--red);font:700 26px 'Space Grotesk';padding:4px 12px;border-radius:6px;transform:rotate(-12deg) scale(3);opacity:0;animation:st .4s 4s cubic-bezier(.3,1.5,.5,1) forwards;background:#fff8}
+@keyframes st{to{opacity:1;transform:rotate(-12deg) scale(1)}}
+.shield{position:absolute;right:0;bottom:0;width:150px;filter:drop-shadow(0 0 22px #5B45E4)}
+.shield path{stroke-dasharray:400;stroke-dashoffset:400;animation:dr 2s .3s forwards,pu 2.5s 2.3s infinite}
+@keyframes dr{to{stroke-dashoffset:0}}@keyframes pu{50%{fill:#5B45E455}}
+.fo{position:absolute;right:60px;bottom:60px;font-size:26px;opacity:0;animation:hit 5s infinite}
+.fo:after{content:"BLOCKED";position:absolute;left:-10px;top:-18px;font:700 9px 'JetBrains Mono';color:var(--lime);opacity:0;animation:bl 5s infinite;animation-delay:inherit}
+@keyframes hit{0%{opacity:0;transform:translate(var(--x),var(--y))}15%{opacity:1}70%{transform:translate(0,0) scale(1);opacity:1}80%{transform:scale(2.2);opacity:.2}100%{opacity:0}}
+@keyframes bl{0%,70%{opacity:0}78%,95%{opacity:1}100%{opacity:0}}
+.ticker{overflow:hidden;border-block:1px solid var(--line);margin:30px -4vw;padding:12px 0;white-space:nowrap}
+.ticker div{display:inline-block;animation:mq 25s linear infinite;font:700 20px 'Space Grotesk';color:var(--mut)}
+@keyframes mq{to{transform:translateX(-50%)}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0}
+.stats div,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.stats b{display:block;font:700 clamp(28px,5vw,46px) 'Space Grotesk';color:var(--lime)}
+h2{font-size:clamp(28px,4.5vw,44px);margin:40px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.step{position:relative}.step .n{font:700 54px 'Space Grotesk';color:var(--ind);opacity:.5}
+.rv{transition:.7s}body:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.06;z-index:100;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}.card{backdrop-filter:blur(10px);background:color-mix(in srgb,var(--card) 78%,transparent);transition:border-color .3s,box-shadow .3s}.card:hover{border-color:var(--ind);box-shadow:0 0 36px #5B45E440}h2:after{content:"";display:block;width:64px;height:4px;border-radius:9px;margin-top:10px;background:linear-gradient(90deg,var(--ind),var(--lime))}.verdict{box-shadow:0 0 70px color-mix(in srgb,var(--c) 30%,transparent)}.rain{position:absolute;inset:0;overflow:hidden;opacity:.28;pointer-events:none}.rain span{position:absolute;top:-320px;font:13px/1.1 'JetBrains Mono',monospace;color:var(--lime);writing-mode:vertical-rl;animation:rn linear infinite}@keyframes rn{to{transform:translateY(135vh)}}.pb{width:260px;height:6px;background:var(--line);border-radius:9px;margin:20px auto 0;overflow:hidden}.pb i{display:block;height:100%;background:linear-gradient(90deg,var(--ind),var(--lime));animation:pbar 3.3s linear forwards}@keyframes pbar{from{width:0}to{width:100%}}.gl{font:700 30px 'Space Grotesk';letter-spacing:.35em;margin-bottom:22px;text-shadow:2px 0 var(--red),-2px 0 #00e5ff;animation:gl .9s steps(2) infinite}@keyframes gl{50%{text-shadow:-2px 0 var(--red),2px 0 #00e5ff;transform:translateX(2px)}}#scan .radar{width:170px}.hero:before{content:"FAKE?";position:absolute;right:-2vw;top:-20px;font:700 clamp(120px,24vw,320px) 'Space Grotesk';color:transparent;-webkit-text-stroke:1px var(--line);z-index:-1;pointer-events:none}.beam{position:absolute;left:-6px;right:-6px;top:0;height:3px;background:var(--lime);box-shadow:0 0 18px 4px var(--lime);animation:bm 3.2s ease-in-out infinite}@keyframes bm{0%,100%{top:0}50%{top:100%}}.flash{position:fixed;inset:0;pointer-events:none;z-index:45;box-shadow:inset 0 0 130px #FF3B5C;animation:fa 1.3s forwards}@keyframes fa{from{opacity:1}to{opacity:0}}#sp{position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(380px at var(--mx,50%) var(--my,30%),#5B45E440,transparent)}.chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:4px 12px;margin:3px;font-size:13px;animation:pg .4s both}.live{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;padding:20px;border:1px solid var(--ind)!important;box-shadow:0 0 50px #5B45E440}@media(max-width:760px){.live{grid-template-columns:1fr}}.live textarea{min-height:190px;margin:0;height:100%}.lv{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.tilt{transition:transform .2s;transform-style:preserve-3d}
+.flip{perspective:900px;height:200px;cursor:pointer}.flip>div{position:relative;height:100%;transition:transform .7s;transform-style:preserve-3d}
+.flip.f>div{transform:rotateY(180deg)}.flip .s{position:absolute;inset:0;backface-visibility:hidden;padding:18px;border-radius:16px;border:1px solid var(--line);background:var(--card);overflow:auto;font-size:14px}
+.flip .b{transform:rotateY(180deg);background:var(--paper);color:var(--ink)}
+.tabs{display:flex;gap:6px;margin:14px 0;flex-wrap:wrap}.tabs button{background:var(--card);color:var(--mut);border:1px solid var(--line);padding:9px 18px;border-radius:99px;font-weight:600}
+.tabs button.on{background:var(--ind);color:#fff;border-color:var(--ind)}
+textarea,input[type=text]{width:100%;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:14px;font:inherit;margin-bottom:10px}
+textarea{min-height:170px;resize:vertical}textarea:focus,input:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+#scan{position:fixed;inset:0;z-index:50;background:#0A0B1Ef2;display:none;place-items:center;color:#F4F1EA}
+#scan.on{display:grid}.radar{width:200px;height:200px;border-radius:50%;border:2px solid var(--lime);position:relative;margin:auto;background:repeating-radial-gradient(#0000 0 30px,#C6FF3D33 31px 32px)}
+.radar:after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#C6FF3D88,transparent 25%);animation:sp 1.2s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#log{font:14px 'JetBrains Mono';margin-top:20px;min-height:90px;color:var(--lime)}
+.verdict{padding:24px;border-radius:18px;border:2px solid var(--c);text-align:center;position:relative;overflow:hidden;background:var(--card)}
+.high{--c:var(--red);animation:sk .5s}.sus{--c:var(--amb)}.safe{--c:var(--lime)}
+@keyframes sk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.gauge{width:260px;max-width:90%}.gauge .a{fill:none;stroke-width:16;stroke-linecap:round}
+.gauge .v{stroke:var(--c);stroke-dasharray:251;stroke-dashoffset:251;transition:stroke-dashoffset 1.6s cubic-bezier(.3,1.4,.5,1)}
+.num{font:700 54px 'Space Grotesk';color:var(--c)}
+.flag{display:flex;gap:12px;align-items:flex-start;position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;overflow:hidden;animation:pg .5s both}
+.flag:after{content:"";position:absolute;inset:0;background:#000;animation:rd .7s forwards;animation-delay:inherit;transform-origin:right}
+@keyframes rd{to{transform:scaleX(0)}}
+.sev{font:700 10px 'JetBrains Mono';padding:2px 8px;border-radius:99px;background:var(--red);color:#fff}.sev.m{background:var(--amb);color:#000}.sev.l{background:var(--line)}
+.vs{position:absolute;right:14px;top:14px;border:3px solid var(--c);color:var(--c);font:700 18px 'Space Grotesk';padding:2px 10px;transform:rotate(10deg);animation:st2 .4s .8s both}
+@keyframes st2{from{opacity:0;transform:rotate(10deg) scale(3)}}
+.cf{position:fixed;top:-10px;width:9px;height:14px;z-index:60;animation:cf 2.4s ease-in forwards}
+@keyframes cf{to{transform:translateY(105vh) rotate(720deg);opacity:.6}}
+.gm{max-width:420px;margin:auto;text-align:center}.paper{background:var(--paper);color:var(--ink);padding:22px;border-radius:8px;text-align:left;transform:rotate(-1.5deg);box-shadow:0 14px 40px #0006;min-height:170px;animation:pg .4s}
+.row{display:flex;gap:10px;margin-top:16px}.row button{flex:1}
+.chk{display:flex;gap:10px;padding:10px;border-radius:10px;cursor:pointer;align-items:center}.chk i{width:22px;height:22px;border:2px solid var(--lime);border-radius:6px;display:grid;place-items:center;transition:.3s;font-style:normal;color:#000}
+.chk.d i{background:var(--lime);transform:rotate(360deg) scale(1.1)}.chk.d span{text-decoration:line-through;opacity:.6}
+.ring{--p:0;width:110px;height:110px;border-radius:50%;background:conic-gradient(var(--rc,var(--lime)) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;transition:.8s}.ring b{background:var(--bg);width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font:700 22px 'Space Grotesk'}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--lime);color:#000;padding:10px 20px;border-radius:99px;font-weight:700;z-index:70;animation:pg .3s}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:15;border-radius:99px;padding:13px 20px}
+small,.dis{color:var(--mut);font-size:13px}footer{text-align:center;padding:30px 4vw;color:var(--mut);font-size:13px}footer a{color:var(--lime)}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div id="sp"></div>
+<header>
+<a class="brand" href="#home">Intern<b>Safe</b> 🛡️</a>
+<nav id="nav"><a href="#home" data-p="home">Home</a><a href="#check" data-p="check">Check an Offer</a><a href="#learn" data-p="learn">Learn</a><a href="#game" data-p="game">Spot the Scam</a><a href="#history" data-p="history">History</a></nav>
+<button class="ic" id="th" aria-label="Toggle theme">◐</button>
+<button class="ic" id="sd" aria-label="Toggle sound">🔇</button>
+</header>
+<main>
+<section class="page" id="p-home">
+<div class="hero"><div>
+<div class="mono">Case #0427 · Scam Forensics Lab</div>
+<h1 id="h1"></h1>
+<p class="sub">Students lose money and personal data to fake internships every day. Paste an offer, and InternSafe flags the red flags in seconds. Free, private, and it runs entirely in your browser.</p>
+<p><a class="btn" href="#check">Check an Offer →</a> <a class="btn g" href="#game">Play Spot the Scam</a></p></div>
+<div class="stage" aria-hidden="true">
+<div class="letter"><div class="sg">Offer Letter · Marketing Intern</div><p>Congratulations! You are selected. Pay <mark>registration fee ₹2,000</mark> to confirm. Contact us on <mark>WhatsApp only</mark>. Please <mark>confirm in 24 hours</mark>.</p><div class="beam"></div><div class="stamp">SCAM 92%</div></div>
+<svg class="shield" viewBox="0 0 100 120"><path d="M50 6 L90 22 V58 C90 86 70 105 50 114 C30 105 10 86 10 58 V22 Z" fill="#5B45E433" stroke="#C6FF3D" stroke-width="4"/><path d="M33 60 L46 73 L69 46" fill="none" stroke="#C6FF3D" stroke-width="6"/></svg>
+<span class="fo" style="--x:-260px;--y:-40px">💸</span><span class="fo" style="--x:-200px;--y:-180px;animation-delay:1.2s">🎣</span><span class="fo" style="--x:-80px;--y:-250px;animation-delay:2.4s">📧</span><span class="fo" style="--x:-250px;--y:-110px;animation-delay:3.6s">📜</span>
+</div></div>
+<div class="ticker" aria-hidden="true"><div id="mq"></div></div>
+<h2>Try it live ⚡</h2><p class="dis">Type or paste any offer and watch the risk radar react in real time.</p>
+<div class="card live"><div><textarea id="lt" aria-label="Live offer scanner" placeholder="Paste an offer here… e.g. “Pay ₹1,500 registration fee, WhatsApp only”"></textarea><p style="margin:10px 0 0"><button class="btn g" id="lx">Load a fake offer</button></p></div><div class="lv"><div class="ring" id="lr" style="width:150px;height:150px"><b style="width:120px;height:120px;font-size:38px">0</b></div><div id="lf" class="dis">Start typing to scan…</div></div></div>
+<h2 class="rv">How it works</h2>
+<div class="grid">
+<div class="card step rv"><div class="n">01</div><h3>Drop the evidence</h3><p class="dis">Paste the offer text, email with sender, or a link.</p></div>
+<div class="card step rv"><div class="n">02</div><h3>Radar sweep</h3><p class="dis">We scan for fees, fake domains, pressure tactics, and data grabs.</p></div>
+<div class="card step rv"><div class="n">03</div><h3>Get the verdict</h3><p class="dis">A risk score, plain-English flags, and next steps. Stamped.</p></div></div>
+<h2 class="rv">Common scams in India</h2>
+<div class="grid" id="scams"></div>
+</section>
+
+<section class="page" id="p-check" hidden>
+<h2>Check an Offer</h2>
+<div class="tabs" role="tablist"><button class="on" data-m="text">Offer Text</button><button data-m="email">Email</button><button data-m="url">Link / URL</button></div>
+<div id="in-email" hidden><input type="text" id="sender" placeholder="Sender address, e.g. hr.careers@gmail.com" aria-label="Sender address"></div>
+<div id="in-url" hidden><input type="text" id="url" placeholder="Paste a link, e.g. http://bit.ly/intern-apply" aria-label="Link"></div>
+<textarea id="txt" placeholder="Paste the offer text or email body here…" aria-label="Offer text"></textarea>
+<p><button class="btn" id="go">Analyze 🔍</button> <button class="btn g" id="exF">Try fake example</button> <button class="btn g" id="exR">Try real example</button></p>
+<div id="res" aria-live="polite"></div>
+<p class="dis">Results are advisory, not a guarantee. Always verify independently.</p>
+</section>
+
+<section class="page" id="p-learn" hidden>
+<h2>Learn the tricks</h2>
+<div class="grid" id="lcards"></div>
+<h2>Been scammed? Do this now</h2>
+<div class="card" id="todo"></div>
+</section>
+
+<section class="page" id="p-game" hidden>
+<h2>Spot the Scam</h2><div class="gm" id="gm"></div>
+</section>
+
+<section class="page" id="p-history" hidden>
+<h2>History</h2>
+<div class="grid"><div class="card" style="display:flex;gap:16px;align-items:center"><div class="ring" id="ring"><b>0</b></div><div><div class="sg">Safety Level</div><small>Grows with every scan</small></div></div><div class="card"><div class="num" style="--c:var(--lime)" id="streak">0</div><small>day scan streak</small></div></div>
+<div id="hl" style="margin-top:14px"></div>
+<p><button class="btn g" id="clr">Clear history</button></p>
+</section>
+</main>
+<footer>InternSafe is advisory only. <a href="https://cybercrime.gov.in" target="_blank" rel="noopener">Report a scam</a> · Helpline 1930</footer>
+<a class="btn fab" href="#check">⚡ Quick Scan</a>
+<div id="scan"><div class="rain" id="rain"></div><div style="position:relative;text-align:center"><div class="gl">SCANNING</div><div class="radar"></div><div class="pb"><i></i></div><div id="log"></div></div></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let snd=false;$('#sd').onclick=()=>{snd=!snd;$('#sd').textContent=snd?'🔊':'🔇';if(snd)fx('safe')};
+function fx(c){try{navigator.vibrate&&navigator.vibrate(c==='high'?[80,40,80]:c==='sus'?[60]:[20,30,20])}catch(e){}
+if(c==='high'){const f=document.createElement('div');f.className='flash';document.body.append(f);setTimeout(()=>f.remove(),1400)}
+if(!snd)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type=c==='high'?'sawtooth':'sine';o.frequency.value=c==='high'?180:c==='sus'?320:620;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+(c==='high'?.5:.25))}catch(e){}}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2200)}
+// theme
+$('#th').onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()==='#0A0B1E';r.dataset.theme=d?'light':'dark'};
+// routing
+const pages=['home','check','learn','game','history'];
+function show(){let h=location.hash.slice(1);if(!pages.includes(h))h='home';$$('.page').forEach(p=>p.hidden=p.id!=='p-'+h);$$('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.p===h));window.scrollTo(0,0);if(h==='history')hist();if(h==='game')game();}
+addEventListener('hashchange',show);
+// hero
+$('#h1').innerHTML='Spot fake offers '.split(' ').filter(Boolean).map(w=>`<span>${w}</span>`).join(' ')+' <span class="shim">before they spot you.</span>';
+$$('#h1>span').forEach((s,i)=>s.style.animationDelay=i*.12+'s');
+const tk='UPFRONT FEES • FAKE DOMAINS • WHATSAPP-ONLY HIRING • CERTIFICATE MILLS • DATA HARVESTING • ';$('#mq').textContent=tk.repeat(6);
+// counters + reveal
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
+function reveal(){$$('.rv').forEach(e=>io.observe(e))}reveal();
+addEventListener('pointermove',e=>{const s=document.documentElement.style;s.setProperty('--mx',e.clientX+'px');s.setProperty('--my',e.clientY+'px')});
+function live(){const v=$('#lt').value,r=analyze(v,'',''),c=lvl(r.score)[0],col={safe:'var(--lime)',sus:'var(--amb)',high:'var(--red)'}[c],ring=$('#lr');ring.style.setProperty('--p',v.trim()?Math.max(r.score,3):0);ring.style.setProperty('--rc',col);ring.querySelector('b').textContent=r.score;$('#lf').innerHTML=v.trim()?(r.F.length?r.F.map(f=>`<span class="chip" style="border-color:${col}">${f.ti}</span>`).join(''):'<span class="chip">No red flags yet</span>'):'Start typing to scan…'}
+$('#lt').oninput=live;$('#lx').onclick=()=>{$('#lt').value=EX.fake[0];live()};
+// scam cards
+const SC=[['Registration-fee job','“Selected! Pay ₹1,500 refundable deposit to receive joining letter.”','Real employers never charge you to hire you.'],['WhatsApp part-time job','“Earn ₹5,000/day liking videos. Message us on Telegram.”','Unrealistic pay, chat-app-only, no interview.'],['Certificate mill','“Instant internship certificate in 24 hours for ₹999.”','No real work, just a purchased paper.'],['Fake HR email','“hr.google-careers@gmail.com: send Aadhaar and PAN to proceed.”','Free email domain and early ID requests.']];
+$('#scams').innerHTML=SC.map(s=>`<div class="flip rv tilt" tabindex="0" role="button" aria-label="Flip card"><div><div class="s"><div class="mono">Tap to flip</div><h3 style="margin-top:8px">${s[0]}</h3><p class="dis">${s[1]}</p></div><div class="s b"><div class="mono" style="color:var(--red)">Red flags</div><p>${s[2]}</p></div></div></div>`).join('');
+$('#lcards').innerHTML=SC.map(s=>`<div class="card rv"><h3>${s[0]}</h3><p class="dis">${s[1]}</p><p><b>Why it’s fake:</b> ${s[2]}</p></div>`).join('');
+document.addEventListener('click',e=>{const f=e.target.closest('.flip');if(f)f.classList.toggle('f')});
+document.addEventListener('mousemove',e=>{const c=e.target.closest('.tilt');$$('.tilt').forEach(t=>{if(t!==c)t.style.transform=''});if(c){const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`rotateY(${x*10}deg) rotateX(${-y*10}deg)`}});
+// checklist
+const TODO=['Stop all payments and block the sender','Screenshot chats, emails, receipts, and UPI IDs','Call your bank and ask to freeze or dispute the transfer','Report at cybercrime.gov.in or call 1930','Change passwords and watch accounts if you shared IDs'];
+$('#todo').innerHTML=TODO.map(t=>`<div class="chk" tabindex="0" role="checkbox" aria-checked="false"><i></i><span>${t}</span></div>`).join('');
+$('#todo').onclick=e=>{const c=e.target.closest('.chk');if(c){c.classList.toggle('d');c.querySelector('i').textContent=c.classList.contains('d')?'✓':'';c.setAttribute('aria-checked',c.classList.contains('d'))}};
+// analyzer
+const COS=['google','microsoft','amazon','infosys','tcs','wipro','accenture','deloitte','flipkart','zomato','swiggy','paytm','cognizant','ibm','adobe','meta'];
+const FREE=['gmail.com','yahoo.com','outlook.com','hotmail.com','rediffmail.com','proton.me'],BAD=['xyz','top','click','buzz','work','link','online','site'];
+function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i,...Array(b.length).fill(0)]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
+function analyze(text,sender,url){
+const F=[],t=text.toLowerCase(),add=(w,sv,ti,de,tip)=>F.push({w,sv,ti,de,tip});
+if(/(registration|security|processing|refundable|training|kit|joining|certificate)\s+(fee|deposit|charges?)|pay\s*(₹|rs\.?|inr)?\s?\d|pay to confirm|upi|paytm|gpay|google pay|western union/.test(t))add(30,'h','Upfront payment requested','Genuine employers never ask candidates to pay.','Never pay. Real offers are free.');
+if(/aadhaar|aadhar|\bpan\b|bank (details|account)|passport|\botp\b|\bcvv\b/.test(t))add(22,'h','Sensitive data requested','ID, bank, or OTP requests before a verified interview are a data-harvest sign.','Share IDs only after a verified offer, via the official portal.');
+if(/limited seats|within 24 hours|act now|last chance|hurry|immediately|today only/.test(t))add(12,'m','Pressure and urgency','Scammers rush you so you won’t verify.','Take time. Real recruiters allow you to think.');
+if(/guaranteed certificate|instant certificate|100% (placement|job)|certificate in \d+/.test(t))add(14,'m','Certificate-mill language','Selling certificates with no real work is a red flag.','Ask for the project scope and a mentor name.');
+if(/whatsapp|telegram/.test(t))add(14,'m','Chat-app-only contact','Companies hire through official email and portals.','Insist on an official company email and video interview.');
+if(/no interview|without interview|direct (selection|joining)|selected without/.test(t))add(16,'h','No interview','Being hired without any interview is not normal.','Real hiring includes screening or an interview.');
+const amt=[...t.matchAll(/(?:₹|rs\.?|inr)\s?([\d,]+)/g)].map(m=>+m[1].replace(/,/g,''));
+if((amt.some(a=>a>=50000)&&/fresher|no experience|no skills|part.?time|work from home/.test(t))||/earn\s*(₹|rs\.?)?\s?\d+[^.]*per (day|hour)/.test(t))add(16,'m','Unrealistic pay','Very high pay for little work or experience.','Compare with market stipends on LinkedIn or Glassdoor.');
+if(/dear candidate|kindly do the needful|you are selected for the post/.test(t))add(6,'l','Generic or poor wording','Mass-sent templates with no name or role details.','Check that the role and your name are specific.');
+if(sender&&sender.includes('@')){const dom=sender.split('@').pop().trim().toLowerCase(),base=dom.split('.')[0].replace(/-/g,''),tld=dom.split('.').pop(),norm=base.replace(/0/g,'o').replace(/1/g,'l').replace(/3/g,'e').replace(/5/g,'s');
+if(FREE.includes(dom))add(20,'h','Free email domain','Recruiters from real companies use company email domains.','Look up the company’s official careers page and contact them there.');
+else{const co=COS.find(c=>c!==base&&(lev(norm,c)<=2||(norm.includes(c)&&norm!==c)));if(co&&!(dom===co+'.com'))add(28,'h','Lookalike domain','“'+dom+'” imitates “'+co+'”.','Compare the domain letter by letter with the real one.')}
+if(BAD.includes(tld))add(18,'h','Suspicious domain ending','.'+tld+' domains are cheap and common in scams.','Be wary of unusual domain endings.')}
+const urls=[url,...(text.match(/https?:\/\/\S+|\b(?:bit\.ly|tinyurl\.com|cutt\.ly|rb\.gy)\/\S+/gi)||[])].filter(Boolean);
+for(const u of urls){const h=u.replace(/^https?:\/\//i,'').split(/[\/?]/)[0].toLowerCase();
+if(/^(bit\.ly|tinyurl\.com|t\.co|goo\.gl|cutt\.ly|rb\.gy|is\.gd)$/.test(h)){add(15,'m','Shortened link','Short links hide the real destination.','Expand it with a link checker before clicking.');break}
+if(/^\d+\.\d+\.\d+\.\d+/.test(h)){add(20,'h','IP-address link','Legit sites use domain names, not raw IPs.','Do not open it.');break}
+if(/^http:\/\//i.test(u)){add(10,'m','No HTTPS','The link isn’t encrypted.','Never enter details on non-HTTPS sites.');break}
+if(h.split('.').length>4){add(10,'m','Too many subdomains','Long chains of subdomains are used to fake brands.','Read the domain from right to left.');break}}
+return{score:Math.min(100,F.reduce((a,f)=>a+f.w,0)),F}}
+const EX={fake:['Congratulations! You are selected for Marketing Intern at Google. No interview needed. Pay registration fee ₹2,000 via UPI to confirm your seat. Limited seats, confirm within 24 hours. Send Aadhaar and PAN on WhatsApp only. Guaranteed certificate!','hr.google-careers@gmail.com','http://bit.ly/g-intern'],real:['Dear Riya, thank you for interviewing for the Software Intern role. We are pleased to offer a stipend of ₹25,000/month for 3 months. Please review the attached offer letter and reply by Friday. Our team will share onboarding details after you accept.','riya.hr@infosys.com','']};
+let mode='text';
+$$('.tabs button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#in-email').hidden=mode!=='email';$('#in-url').hidden=mode!=='url'});
+function ex(k){const e=EX[k];$('#txt').value=e[0];$('#sender').value=e[1];$('#url').value=e[2];if(k==='fake'&&mode==='text')$$('.tabs button')[1].click()}
+$('#exF').onclick=()=>ex('fake');$('#exR').onclick=()=>ex('real');
+$('#go').onclick=()=>{const tx=$('#txt').value.trim(),sd=mode==='email'?$('#sender').value:'',ur=mode==='url'?$('#url').value.trim():'';if(!tx&&!ur)return toast('Paste something to analyze');
+const lines=['Checking sender domain... ✓','Scanning keywords... ✓','Verifying recruiter signals... ✓','Building verdict... ✓'],lg=$('#log');lg.textContent='';$('#scan').classList.add('on');$('#rain').innerHTML=Array.from({length:22},(_,i)=>`<span style="left:${i*4.6}%;animation-duration:${2+Math.random()*3}s;animation-delay:-${Math.random()*4}s">${Array.from({length:18},()=>'01ABCDEF₹$#@'[Math.random()*12|0]).join('')}</span>`).join('');
+lines.forEach((l,i)=>setTimeout(()=>lg.innerHTML+=l+'<br>',i*800));
+setTimeout(()=>{$('#scan').classList.remove('on');result(analyze(tx,sd,ur),tx||ur)},3300)};
+function lvl(s){return s<25?['safe','Safe','VERIFIED']:s<55?['sus','Suspicious','CHECK IT']:['high','High Risk','FAKE?']}
+function result(r,src){const [c,lab,st]=lvl(r.score);
+const tips=[...new Set(r.F.map(f=>f.tip))];
+$('#res').innerHTML=`<div class="verdict ${c}"><div class="vs">${st}</div><svg class="gauge" viewBox="0 0 200 110"><path class="a" d="M20 100A80 80 0 0 1 180 100" stroke="var(--line)"/><path class="a v" id="gv" d="M20 100A80 80 0 0 1 180 100" pathLength="251"/></svg><div class="num" id="gn">0</div><div class="sg" style="font-size:22px">${lab}</div></div>
+<h3 style="margin:22px 0 4px">Red flags (${r.F.length})</h3>${r.F.length?r.F.map((f,i)=>`<div class="flag" style="animation-delay:${i*.4}s"><span class="sev ${f.sv}">${{h:'HIGH',m:'MED',l:'LOW'}[f.sv]}</span><div><b>${f.ti}</b><br><small>${f.de}</small></div></div>`).join(''):'<p class="dis">No red flags found. Still verify the company independently.</p>'}
+<h3 style="margin:22px 0 4px">Verify like a detective</h3><ul>${(tips.length?tips:['Confirm the role on the company’s official careers page.']).map(t=>'<li>'+t+'</li>').join('')}</ul>
+<p><a class="btn g" target="_blank" rel="noopener" href="https://www.linkedin.com/search/results/companies/?keywords=">LinkedIn</a> <a class="btn g" target="_blank" rel="noopener" href="https://www.google.com/search?q=internship+offer+scam+reviews">Google “scam”</a> <a class="btn g" target="_blank" rel="noopener" href="https://www.mca.gov.in/">MCA registry</a></p>
+<p><button class="btn" id="cp">Copy report</button> <button class="btn g" id="dl">Download report</button> <button class="btn g" id="sh">Share result card 📸</button></p><div id="shc"></div>`;
+setTimeout(()=>{$('#gv').style.strokeDashoffset=251-251*r.score/100;const t0=performance.now();(function f(n){const p=Math.min(1,(n-t0)/1600);$('#gn').textContent=Math.round(r.score*p);if(p<1)requestAnimationFrame(f)})(t0)},100);
+if(c==='safe')confetti();fx(c);
+const rep=`InternSafe report\nRisk: ${r.score}/100 (${lab})\n\nFlags:\n${r.F.map(f=>'- '+f.ti+': '+f.de).join('\n')||'None'}\n\nAdvisory only, not a guarantee.`;
+$('#cp').onclick=()=>{navigator.clipboard?.writeText(rep).then(()=>toast('Report copied'),()=>toast('Copy failed'))};
+$('#dl').onclick=()=>{const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(rep);a.download='internsafe-report.txt';a.click()};
+$('#sh').onclick=()=>shareCard(r,lab,c);
+const h=store.get('is_h',[]);h.unshift({d:Date.now(),s:r.score,l:lab,t:src.slice(0,70)});store.set('is_h',h.slice(0,30));$('#res').scrollIntoView({behavior:'smooth'})}
+function shareCard(r,lab,c){const col={safe:'#C6FF3D',sus:'#FFB020',high:'#FF3B5C'}[c],cv=document.createElement('canvas');cv.width=1080;cv.height=1350;const x=cv.getContext('2d'),g=x.createLinearGradient(0,0,1080,1350);g.addColorStop(0,'#0A0B1E');g.addColorStop(1,'#241a63');x.fillStyle=g;x.fillRect(0,0,1080,1350);x.strokeStyle='#ffffff12';x.lineWidth=2;for(let i=0;i<=1350;i+=54){x.beginPath();x.moveTo(i,0);x.lineTo(i,1350);x.stroke();x.beginPath();x.moveTo(0,i);x.lineTo(1080,i);x.stroke()}
+x.textAlign='center';x.fillStyle='#F4F1EA';x.font='700 64px "Space Grotesk",sans-serif';x.fillText('InternSafe 🛡️',540,130);x.fillStyle='#C6FF3D';x.font='500 28px "JetBrains Mono",monospace';x.fillText('CASE #'+(1000+Math.floor(Math.random()*9000))+' · FORENSIC RESULT',540,185);
+x.lineWidth=40;x.lineCap='round';x.strokeStyle='#2a2d63';x.beginPath();x.arc(540,540,230,0,7);x.stroke();x.strokeStyle=col;x.shadowColor=col;x.shadowBlur=40;x.beginPath();x.arc(540,540,230,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(r.score,2)/100);x.stroke();x.shadowBlur=0;
+x.fillStyle=col;x.font='700 190px "Space Grotesk",sans-serif';x.fillText(r.score,540,600);x.fillStyle='#F4F1EA';x.font='700 70px "Space Grotesk",sans-serif';x.fillText(lab,540,860);
+x.save();x.translate(540,1085);x.rotate(-.025);x.fillStyle='#F4F1EA';x.fillRect(-440,-140,880,300);x.fillStyle='#14163a';x.textAlign='left';x.font='700 34px "Space Grotesk",sans-serif';x.fillText('Red flags found',-400,-80);x.font='400 34px Inter,sans-serif';const fl=r.F.slice(0,3);(fl.length?fl:[{ti:'No red flags detected'}]).forEach((f,i)=>x.fillText('• '+f.ti,-400,-20+i*55));x.restore();
+x.save();x.translate(850,760);x.rotate(.2);x.strokeStyle=col;x.fillStyle=col;x.lineWidth=8;x.font='700 50px "Space Grotesk",sans-serif';x.textAlign='center';const st=lvl(r.score)[2],w=x.measureText(st).width+50;x.strokeRect(-w/2,-52,w,80);x.fillText(st,0,8);x.restore();
+x.textAlign='center';x.fillStyle='#9a9cc0';x.font='400 30px Inter,sans-serif';x.fillText('Check before you pay. Advisory only.',540,1295);
+const url=cv.toDataURL('image/png');$('#shc').innerHTML=`<img src="${url}" alt="Shareable result card" style="width:100%;max-width:380px;border-radius:14px;margin-top:14px;animation:pg .5s"><p class="dis">Long-press or right-click the image to save it, or use the buttons.</p><button class="btn" id="sh2">Share</button> <button class="btn g" id="sh3">Download PNG</button>`;
+$('#sh2').onclick=()=>cv.toBlob(b=>{const f=new File([b],'internsafe-result.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:'InternSafe result'}).catch(()=>{});else toast('Long-press the image to save it')});
+$('#sh3').onclick=()=>{const a=document.createElement('a');a.href=url;a.download='internsafe-result.png';a.click();toast('If nothing downloads, long-press the image')};
+$('#shc').scrollIntoView({behavior:'smooth',block:'center'})}
+function confetti(){const cs=['#C6FF3D','#5B45E4','#FFB020','#FF3B5C'];for(let i=0;i<50;i++){const e=document.createElement('i');e.className='cf';e.style.left=Math.random()*100+'vw';e.style.background=cs[i%4];e.style.animationDelay=Math.random()*.6+'s';document.body.append(e);setTimeout(()=>e.remove(),3200)}}
+// game
+const G=[['Hi Aman, congrats on clearing your interview with Zomato. Your offer letter is attached, with ₹15,000/month stipend. Please reply to accept. – talent@zomato.com',0,'Interview happened, company domain, no payment asked.'],['You’re selected! No interview. Pay ₹1,200 refundable kit fee on UPI to get your joining letter today only.',1,'Fee, no interview, urgency.'],['Earn ₹8,000 daily from home. Just like videos. Message on Telegram to start now.',1,'Unrealistic pay through Telegram.'],['Thanks for applying to our Data Intern role. Please complete the coding test at our careers portal within 7 days.',0,'No fees, a normal process, a reasonable deadline.'],['Get an instant internship certificate from Microsoft-Careers.xyz for just ₹999. 100% guaranteed!',1,'Certificate mill and a fake .xyz domain.']];
+let gi=0,gs=0;
+function game(){gi=0;gs=0;gcard()}
+function gcard(){const g=$('#gm');if(gi>=G.length){const b=gs>=5?'Scam Slayer 🗡️':gs>=3?'Detective 🕵️':'Rookie 🔰';if(gs>=4)confetti();g.innerHTML=`<div class="paper" style="text-align:center"><div class="mono" style="color:var(--ind)">Case closed</div><h2 style="margin:6px 0">${b}</h2><p>You scored ${gs}/${G.length}</p></div><div class="row"><button class="btn" id="ag">Play again</button></div>`;$('#ag').onclick=game;return}
+g.innerHTML=`<div class="mono">Offer ${gi+1} of ${G.length} · Score ${gs}</div><div class="paper" style="margin-top:10px">${G[gi][0]}</div><div class="row" id="gb"><button class="btn" data-a="0" style="background:#1d8a4b">✔ Real</button><button class="btn" data-a="1" style="background:#c0203d">✖ Fake</button></div><p id="gf"></p>`;
+$('#gb').onclick=e=>{const b=e.target.closest('button');if(!b)return;const ok=+b.dataset.a===G[gi][1];if(ok)gs++;fx(ok?'safe':'high');$('#gb').innerHTML='<button class="btn" id="nx">Next →</button>';$('#gf').innerHTML=`<b style="color:${ok?'var(--lime)':'var(--red)'}">${ok?'Correct!':'Not quite.'}</b> ${G[gi][2]}`;$('#nx').onclick=()=>{gi++;gcard()}}}
+// history
+function hist(){const h=store.get('is_h',[]);$('#hl').innerHTML=h.length?h.map(x=>`<div class="card" style="margin:8px 0;display:flex;gap:12px;align-items:center"><b class="sg" style="font-size:26px;color:${x.s<25?'var(--lime)':x.s<55?'var(--amb)':'var(--red)'}">${x.s}</b><div><b>${x.l}</b><br><small>${new Date(x.d).toLocaleDateString()} · ${x.t.replace(/</g,'&lt;')}…</small></div></div>`).join(''):'<div class="card" style="text-align:center"><div style="font-size:50px">🗂️</div><p class="dis">No cases filed yet. Scan your first offer.</p></div>';
+const p=Math.min(100,h.length*10);$('#ring').style.setProperty('--p',p);$('#ring b').textContent=p;
+const days=[...new Set(h.map(x=>new Date(x.d).toDateString()))];let s=0,d=new Date();while(days.includes(d.toDateString())){s++;d.setDate(d.getDate()-1)}$('#streak').textContent=s}
+$('#clr').onclick=()=>{store.set('is_h',[]);hist();toast('History cleared')};
+show();
+</script>
+</body>
+</html>
